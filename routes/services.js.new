@@ -1,0 +1,190 @@
+const express = require('express');
+const router = express.Router();
+const mysql = require('mysql2/promise');
+require('dotenv').config();
+const { validateParams, validateQuery, schemas } = require('../middleware/validation');
+
+// Database connection pool
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'pet_hotel',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
+// Get all available services with current slot availability
+router.get('/', async (req, res) => {
+  try {
+    const [services] = await pool.query(`
+      SELECT 
+        s.service_id,
+        s.service_name,
+        s.service_type,
+        sc.category_name,
+        s.max_slots,
+        COALESCE(booked_today.booked_count, 0) as booked_slots,
+        (s.max_slots - COALESCE(booked_today.booked_count, 0)) as available_slots,
+        s.duration_hours,
+        s.description
+      FROM services s
+      JOIN service_categories sc ON s.category_id = sc.category_id
+      LEFT JOIN (
+        SELECT 
+          service_id,
+          COUNT(*) as booked_count
+        FROM bookings 
+        WHERE booking_date = CURDATE() 
+        AND status IN ('pending', 'confirmed')
+        GROUP BY service_id
+      ) booked_today ON s.service_id = booked_today.service_id
+      WHERE s.is_active = TRUE
+      ORDER BY sc.category_id, s.service_name
+    `);
+    
+    res.json({
+      success: true,
+      data: services
+    });
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching services',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+// Get service availability for a specific date
+router.get('/availability/:date', validateParams(schemas.dateParam), async (req, res) => {
+  try {
+    const { date } = req.params;
+    
+    // Validate date format
+    if (!date || !date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD' });
+    }
+
+    const [services] = await pool.query(`
+      SELECT 
+        s.service_id,
+        s.service_name,
+        s.service_type,
+        sc.category_name,
+        s.max_slots,
+        COALESCE(active_bookings.booked_count, 0) as booked_slots,
+        (s.max_slots - COALESCE(active_bookings.booked_count, 0)) as available_slots,
+        s.base_price as base_price
+      FROM services s
+      JOIN service_categories sc ON s.category_id = sc.category_id
+      LEFT JOIN (
+        SELECT 
+          service_id,
+          COUNT(*) as booked_count
+        FROM bookings 
+        WHERE ? BETWEEN start_date AND end_date 
+        AND status IN ('pending', 'confirmed')
+        GROUP BY service_id
+      ) active_bookings ON s.service_id = active_bookings.service_id
+      WHERE s.is_active = TRUE
+      ORDER BY sc.category_id, s.service_name
+    `, [date]);
+    
+    res.json(services);
+  } catch (error) {
+    console.error('Error fetching service availability:', error);
+    res.status(500).json({
+      message: 'Error fetching service availability',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+// Check calendar availability for a specific date
+router.get('/calendar-availability/:date', validateParams(schemas.dateParam), async (req, res) => {
+  try {
+    const { date } = req.params;
+    
+    // Validate date format
+    if (!date || !date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD' });
+    }
+    
+    const [availability] = await pool.query(`
+      SELECT 
+        date,
+        is_available,
+        reason,
+        notes
+      FROM calendar_availability 
+      WHERE date = ?
+      UNION ALL
+      SELECT 
+        ? as date,
+        TRUE as is_available,
+        NULL as reason,
+        NULL as notes
+      WHERE NOT EXISTS (
+        SELECT 1 FROM calendar_availability WHERE date = ?
+      )
+    `, [date, date, date]);
+    
+    if (availability.length > 0) {
+      res.json({
+      success: true,
+      data: availability[0]
+    });
+    } else {
+      res.json({
+      success: true,
+      data: { date, is_available: true, reason: null, notes: null }
+    });
+    }
+  } catch (error) {
+    console.error('Error checking calendar availability:', error);
+    res.status(500).json({
+      message: 'Error checking calendar availability',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+// Get calendar availability for a date range
+router.get('/calendar-availability', validateQuery(schemas.dateRange), async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    // Validate date format
+    if (!startDate || !startDate.match(/^\d{4}-\d{2}-\d{2}$/) || 
+        !endDate || !endDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD' });
+    }
+    
+    const [availability] = await pool.query(`
+      SELECT 
+        date,
+        is_available,
+        reason,
+        notes
+      FROM calendar_availability
+      WHERE date BETWEEN ? AND ?
+      ORDER BY date
+    `, [startDate, endDate]);
+    
+    res.json({
+      success: true,
+      data: availability
+    });
+  } catch (error) {
+    console.error('Error checking calendar availability range:', error);
+    res.status(500).json({
+      message: 'Error checking calendar availability range',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+module.exports = router;
