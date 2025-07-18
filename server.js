@@ -69,6 +69,7 @@ app.use(cors({
   origin: [
     'https://baguio-pet-boarding.com',
     'https://www.baguio-pet-boarding.com',
+    'https://baguiopetboarding-backend.onrender.com',
     'http://localhost:3002',
     'http://localhost:3003'
   ],
@@ -82,6 +83,7 @@ app.options('*', cors({
   origin: [
     'https://baguio-pet-boarding.com',
     'https://www.baguio-pet-boarding.com',
+    'https://baguiopetboarding-backend.onrender.com',
     'http://localhost:3002',
     'http://localhost:3003'
   ],
@@ -95,6 +97,7 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     'https://baguio-pet-boarding.com',
     'https://www.baguio-pet-boarding.com',
+    'https://baguiopetboarding-backend.onrender.com',
     'http://localhost:3002',
     'http://localhost:3003'
   ];
@@ -102,6 +105,9 @@ app.use((req, res, next) => {
   
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    // For development and debugging, log unrecognized origins
+    console.log('Unrecognized origin:', origin);
   }
   
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -877,14 +883,20 @@ app.use('/api/pets', cacheMiddleware);
 const startServer = () => {
   const serverPort = parseInt(PORT, 10);
   
-  app.listen(serverPort, '0.0.0.0', () => {
+  // Start server first to avoid Render timeout
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${serverPort}`);
-    console.log(`API URL: http://localhost:${serverPort}`);
-  }).on('error', (err) => {
-    console.error('Server error:', err);
-    // Don't try alternative ports - Render expects us to use their PORT
-    process.exit(1);
   });
+
+  // Add error handler for server
+  server.on('error', (error) => {
+    console.error('Server error:', error);
+  });
+
+  // Add keep-alive settings
+  server.keepAliveTimeout = 65000; // Slightly higher than 60 seconds
+  server.headersTimeout = 66000; // Slightly higher than keepAliveTimeout
+  console.log(`API URL: http://localhost:${serverPort}`);
 };
 
 // Start the server

@@ -3,25 +3,26 @@ require('dotenv').config();
 
 // Log environment variables (without sensitive data)
 console.log('Database configuration:', {
-  host: process.env.SUPABASE_HOST,
-  port: process.env.SUPABASE_PORT,
-  user: process.env.SUPABASE_USER,
-  database: process.env.SUPABASE_DATABASE,
+  host: process.env.SUPABASE_HOST || process.env.DB_HOST,
+  port: process.env.SUPABASE_PORT || process.env.DB_PORT,
+  user: process.env.SUPABASE_USER || process.env.DB_USER,
+  database: process.env.SUPABASE_DATABASE || process.env.DB_DATABASE,
   ssl: true
 });
 
 const pool = new Pool({
-  host: process.env.SUPABASE_HOST,
-  port: parseInt(process.env.SUPABASE_PORT || '5432', 10),
-  user: process.env.SUPABASE_USER,
-  password: process.env.SUPABASE_PASSWORD,
-  database: process.env.SUPABASE_DATABASE || 'postgres',
+  host: process.env.SUPABASE_HOST || process.env.DB_HOST || 'db.supabase.com',
+  port: parseInt(process.env.SUPABASE_PORT || process.env.DB_PORT || '5432', 10),
+  user: process.env.SUPABASE_USER || process.env.DB_USER,
+  password: process.env.SUPABASE_PASSWORD || process.env.DB_PASSWORD,
+  database: process.env.SUPABASE_DATABASE || process.env.DB_DATABASE || 'postgres',
   ssl: {
     rejectUnauthorized: false,
     sslmode: 'require'
   },
   max: 10, // Set max pool size
-  idleTimeoutMillis: 30000 // Close idle clients after 30 seconds
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 10000 // Connection timeout reduced to 10 seconds
 });
 
 // Test the connection
