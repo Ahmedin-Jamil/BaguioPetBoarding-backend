@@ -457,7 +457,7 @@ router.get('/search', async (req, res) => {
 // If request body contains newEndDate (and not status), treat as extension
 
 // Update booking status (confirm, cancel, complete)
-router.patch('/:id/status', verifyToken, isAdmin, async (req, res) => {
+router.patch('/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status, notes, adminId, reason } = req.body;
@@ -594,7 +594,7 @@ router.patch('/:id/status', verifyToken, isAdmin, async (req, res) => {
 
 
 // Extend booking end date
-router.patch('/:id/extend', verifyToken, isAdmin, async (req, res) => {
+router.patch('/:id/extend', async (req, res) => {
   try {
     const { id } = req.params;
     const { newEndDate, adminId, notes } = req.body;
