@@ -7,6 +7,8 @@ const router = express.Router();
 const { pool } = require('../config/db');
 
 const emailService = require('../services/emailService');
+// Admin authentication middleware
+const { verifyToken, isAdmin } = require('../middleware/auth');
 const bookingController = require('../controllers/bookingController'); // Flattened schema controller
 
 // Flattened schema booking creation route (declared early to override legacy implementation)
@@ -455,7 +457,7 @@ router.get('/search', async (req, res) => {
 // If request body contains newEndDate (and not status), treat as extension
 
 // Update booking status (confirm, cancel, complete)
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status, notes, adminId, reason } = req.body;
@@ -592,7 +594,7 @@ router.patch('/:id/status', async (req, res) => {
 
 
 // Extend booking end date
-router.patch('/:id/extend', async (req, res) => {
+router.patch('/:id/extend', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { newEndDate, adminId, notes } = req.body;
