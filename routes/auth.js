@@ -49,7 +49,8 @@ router.post('/admin/login', validate(schemas.adminLogin), async (req, res) => {
     const adminData = {
       admin_id: admin.admin_id,
       username: admin.username,
-      role: 'admin'
+      role: 'admin',
+      isAdmin: true
     };
     
     const token = generateToken(adminData);
@@ -60,7 +61,8 @@ router.post('/admin/login', validate(schemas.adminLogin), async (req, res) => {
       data: {
         admin_id: admin.admin_id,
         username: admin.username,
-        token
+        token,
+        isAdmin: true
       }
     });
     
