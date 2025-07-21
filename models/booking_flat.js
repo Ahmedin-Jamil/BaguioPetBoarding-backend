@@ -157,7 +157,7 @@ async function createBooking(bookingData) {
       start_time      : bookingData.start_time || bookingData.startTime || null,
       end_time        : bookingData.end_time   || bookingData.endTime   || null,
       total_amount    : bookingData.total_amount || 0,
-      special_requests: bookingData.special_requests || null,
+      special_requests: bookingData.special_requests || bookingData.specialRequests || bookingData.additionalInfo || bookingData.additional_info || null,
       grooming_type   : bookingData.grooming_type || null
     };
 
