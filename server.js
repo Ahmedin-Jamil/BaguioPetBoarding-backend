@@ -7,6 +7,12 @@ const actuator = require('express-actuator');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 require('dotenv').config();
+// Disable most console output in production to avoid leaking sensitive info
+if (process.env.NODE_ENV === 'production') {
+  ['log','debug','info','trace'].forEach(method => {
+    console[method] = () => {};
+  });
+}
 const { createClient } = require('redis');
 
 // Import API Routes
