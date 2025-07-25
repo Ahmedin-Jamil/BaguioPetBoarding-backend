@@ -102,17 +102,8 @@ async function createBooking(req, res) {
   // All bookings are treated as guest bookings
   let isGuestBooking = req.body.guest_booking_only === true;
 
-  // Log the request data for debugging
-  console.log('1. Received booking request:', JSON.stringify(req.body, null, 2));
   try {
     const bookingData = req.body;
-    console.log('2. Processing booking data:', {
-      has_guest_user: !!bookingData.guest_user,
-      has_guest_pet: !!bookingData.guest_pet,
-      service_type: bookingData.service_type,
-      service_id: bookingData.service_id,
-      pet_type: bookingData.pet_type
-    });
 
     /* ------------------------------------------------------------------
        1.  BUILD FALLBACK guest_user / guest_pet STRUCTURE
@@ -180,25 +171,6 @@ async function createBooking(req, res) {
       };
     }
     
-    // Log guest booking status
-    console.log('2a. Is guest booking:', isGuestBooking);
-    
-    // Log all possible owner fields
-    console.log('2b. Owner fields:', {
-      'owner_name': bookingData.owner_name,
-      'name': bookingData.name,
-      'first_name': bookingData.first_name,
-      'last_name': bookingData.last_name,
-      'owner_first_name': bookingData.owner_first_name,
-      'owner_last_name': bookingData.owner_last_name,
-      'owner_email': bookingData.owner_email,
-      'email': bookingData.email,
-      'owner_phone': bookingData.owner_phone,
-      'phone': bookingData.phone,
-      'owner_address': bookingData.owner_address,
-      'address': bookingData.address
-    });
-    
     // Validate required guest information
     // Build list of missing fields
     const missingFields = [];
@@ -225,7 +197,6 @@ async function createBooking(req, res) {
     }
 
     // Validate guest user information
-    console.log('3. Guest user info:', bookingData.guest_user);
     const guestUserInfo = bookingData.guest_user || {};
     const contactEmail = guestUserInfo.owner_email || bookingData.ownerEmail || bookingData.email;
     const contactPhone = guestUserInfo.owner_phone || bookingData.ownerPhone || bookingData.phone;
@@ -258,14 +229,12 @@ async function createBooking(req, res) {
     }
 
     // Get service details to check cat allowance and service type
-    console.log('3. Looking up service:', bookingData.service_id || bookingData.service_type);
     let serviceRows;
     if (bookingData.service_id) {
       ({ rows: serviceRows } = await pool.query('SELECT * FROM services WHERE service_id = $1', [bookingData.service_id]));
     } else {
       ({ rows: serviceRows } = await pool.query('SELECT * FROM services WHERE service_type = $1', [bookingData.service_type]));
     }
-    console.log('4. Service lookup result:', serviceRows);
     if (serviceRows.length === 0) {
       return res.status(404).json({
         success: false,
@@ -306,27 +275,6 @@ async function createBooking(req, res) {
       }
     }
     
-    // Log the booking attempt
-    if (isGuestBooking) {
-      console.log('Creating GUEST booking:', {
-        guest_email: bookingData.guest_user?.email,
-        service_id: bookingData.service_id,
-        date: bookingData.booking_date
-      });
-      
-      // Debug guest booking data
-      console.log('CONTROLLER - Guest user data:', JSON.stringify(bookingData.guest_user));
-      console.log('CONTROLLER - Guest pet data:', JSON.stringify(bookingData.guest_pet));
-      console.log('CONTROLLER - Weight category:', bookingData.weight_category);
-      console.log('CONTROLLER - Date of birth:', bookingData.date_of_birth);
-    } else {
-      console.log('Creating regular booking:', {
-        email: bookingData.user?.email,
-        service_id: bookingData.service_id,
-        date: bookingData.booking_date
-      });
-    }
-    
     // Create a clean copy of the booking data to avoid reference issues
     const bookingDataCopy = {
       ...req.body,
@@ -335,13 +283,7 @@ async function createBooking(req, res) {
 
     // For guest bookings, ensure guest_user and guest_pet are properly set
     if (isGuestBooking) {
-      console.log('CONTROLLER - Guest booking detected, guest_user:', JSON.stringify(req.body.guest_user, null, 2));
-      console.log('CONTROLLER - Guest booking detected, guest_pet:', JSON.stringify(req.body.guest_pet, null, 2));
-      
       // Ensure weight_category and date_of_birth are available at the top level
-      console.log('CONTROLLER - Top level weight_category:', req.body.weight_category);
-      console.log('CONTROLLER - Top level date_of_birth:', req.body.date_of_birth);
-      
       // Ensure guest_pet has weight_category and date_of_birth
       if (req.body.guest_pet) {
         // Extract weight_category from all possible sources
@@ -370,8 +312,6 @@ async function createBooking(req, res) {
         // Also set these at the top level for the model layer
         bookingDataCopy.weight_category = weightCategory;
         bookingDataCopy.date_of_birth = dateOfBirth;
-        
-        console.log('CONTROLLER - Enhanced guest_pet:', JSON.stringify(bookingDataCopy.guest_pet, null, 2));
       }
     }
     
