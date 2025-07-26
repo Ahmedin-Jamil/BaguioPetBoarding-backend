@@ -273,10 +273,15 @@ async function sendBookingNotification(data) {
     const bookingDate = start_date ? new Date(start_date).toLocaleDateString() : 'N/A';
     const endDate = end_date ? new Date(end_date).toLocaleDateString() : 'N/A';
     
-    // Get admin emails from environment variables or use default
-    const adminEmails = process.env.ADMIN_EMAILS ? 
-      process.env.ADMIN_EMAILS.split(',') : 
-      ['baguiopetboarding@gmail.com']; // Default admin email
+    // Determine recipients: if customRecipient is provided, use it; otherwise default to configured admin emails
+    let adminEmails;
+    if (data.customRecipient) {
+      adminEmails = [data.customRecipient];
+    } else {
+      adminEmails = process.env.ADMIN_EMAILS ?
+        process.env.ADMIN_EMAILS.split(',') :
+        ['baguiopetboarding@gmail.com']; // Default admin email
+    }
     
     if (!adminEmails.length) {
       console.warn('No admin emails configured for notifications');

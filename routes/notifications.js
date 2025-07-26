@@ -31,7 +31,7 @@ router.post('/admin-notification', validate(adminNotificationValidation), async 
     }
     
     // Send admin notification email
-    await emailService.sendAdminNotification({
+    await emailService.sendBookingNotification({
       subject,
       message
     });
@@ -65,7 +65,7 @@ router.post('/send-email', async (req, res) => {
     }
     
     // Use the emailService to send the email
-    const info = await emailService.sendAdminNotification({
+    const info = await emailService.sendBookingNotification({
       subject,
       message: text,
       customRecipient: to
