@@ -348,5 +348,6 @@ module.exports = {
   sendBookingConfirmation,
   sendBookingStatusUpdate,
   sendBookingNotification,
+  sendAdminNotification,
   sendNewModification
 };
