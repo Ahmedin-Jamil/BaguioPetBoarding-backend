@@ -338,8 +338,15 @@ async function sendBookingNotification(data) {
   }
 }
 
+// Wrapper retained for backward compatibility
+async function sendNewModification(data) {
+  // Send both customer and admin notifications about modification status
+  return sendBookingStatusUpdate(data);
+}
+
 module.exports = {
   sendBookingConfirmation,
   sendBookingStatusUpdate,
-  sendBookingNotification
+  sendBookingNotification,
+  sendNewModification
 };
