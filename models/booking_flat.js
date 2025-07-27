@@ -158,6 +158,24 @@ const data = {
       date_of_birth   : pet.date_of_birth   || bookingData.date_of_birth || null,
       weight_category : pet.weight_category || pet.weightCategory || bookingData.weight_category || 'Medium',
 
+      // ----- OWNER NAME FALLBACKS -----
+      // If first/last names are missing but a combined owner_name exists, split it
+      ...(function () {
+        let first = bookingData.owner_first_name || bookingData.ownerFirstName;
+        let last  = bookingData.owner_last_name  || bookingData.ownerLastName;
+
+        const fullName = bookingData.owner_name || (bookingData.guest_user && bookingData.guest_user.name);
+        if ((!first || !last) && fullName) {
+          const parts = fullName.trim().split(' ');
+          if (!first) first = parts.shift();
+          if (!last)  last  = parts.join(' ');
+        }
+        return {
+          owner_first_name: first || null,
+          owner_last_name : last  || null
+        };
+      })(),
+
       service_id      : bookingData.service_id || bookingData.serviceId,
       room_type       : bookingData.room_type  || bookingData.roomType || null,
       start_date      : bookingData.start_date || bookingData.booking_date,
