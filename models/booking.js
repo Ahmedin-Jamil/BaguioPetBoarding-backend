@@ -343,8 +343,8 @@ async function createBooking(bookingData) {
     const data = {
       owner_first_name: owner.first_name || owner.firstName || owner.name || bookingData.owner_first_name || '',
       owner_last_name : owner.last_name  || owner.lastName  || bookingData.owner_last_name || '',
-      owner_email     : owner.email      || bookingData.owner_email || '',
-      owner_phone     : owner.phone      || bookingData.owner_phone || '',
+      owner_email     : owner.email      || bookingData.owner_email || bookingData.ownerEmail || '',
+      owner_phone     : owner.phone      || bookingData.owner_phone || bookingData.ownerPhone || '',
       owner_address   : owner.address    || bookingData.owner_address || null,
 
       pet_name        : pet.pet_name || pet.name || bookingData.pet_name || '',
