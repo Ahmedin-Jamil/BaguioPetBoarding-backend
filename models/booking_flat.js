@@ -136,9 +136,17 @@ async function createBooking(bookingData) {
     const owner = bookingData.owner_first_name ? bookingData : (bookingData.guest_user || {});
     const pet   = bookingData.pet_name        ? bookingData : (bookingData.guest_pet  || {});
 
-    const data = {
-      owner_first_name: owner.first_name    || owner.firstName    || owner.name         || bookingData.owner_first_name || '',
-      owner_last_name : owner.last_name     || owner.lastName     || bookingData.owner_last_name || '',
+    // Helper to split a full name into first / last
+function splitFullName(full = '') {
+  const parts = full.trim().split(/\s+/);
+  const first = parts.shift() || '';
+  const last  = parts.join(' ');
+  return { first, last };
+}
+
+const data = {
+      owner_first_name: owner.first_name    || owner.firstName    || owner.name         || bookingData.owner_first_name || (bookingData.ownerName ? splitFullName(bookingData.ownerName).first : ''),
+      owner_last_name : owner.last_name     || owner.lastName     || bookingData.owner_last_name || (bookingData.ownerName ? splitFullName(bookingData.ownerName).last : ''),
       owner_email     : owner.email         || bookingData.owner_email || bookingData.ownerEmail || '',
       owner_phone     : owner.phone         || bookingData.owner_phone || bookingData.ownerPhone || '',
       owner_address   : owner.address       || bookingData.owner_address || null,
