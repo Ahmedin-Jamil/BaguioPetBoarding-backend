@@ -3,17 +3,19 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 async function createAdmin() {
-  const pool = new Pool({
-    host: process.env.SUPABASE_HOST,
-    port: process.env.SUPABASE_PORT,
-    user: process.env.SUPABASE_USER,
-    password: process.env.SUPABASE_PASSWORD,
-    database: process.env.SUPABASE_DATABASE,
-    ssl: {
-      rejectUnauthorized: false,
-      sslmode: 'require'
-    }
-  });
+  // Allow full DATABASE_URL as first CLI arg OR from env
+  const [, , connStringArg] = process.argv;
+
+  const pool = connStringArg
+    ? new Pool({ connectionString: connStringArg, ssl: { rejectUnauthorized: false } })
+    : new Pool({
+        host: process.env.SUPABASE_HOST,
+        port: process.env.SUPABASE_PORT,
+        user: process.env.SUPABASE_USER,
+        password: process.env.SUPABASE_PASSWORD,
+        database: process.env.SUPABASE_DATABASE,
+        ssl: { rejectUnauthorized: false, sslmode: 'require' }
+      });
 
   try {
     // Allow username and password via command-line args
