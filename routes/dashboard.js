@@ -38,7 +38,7 @@ router.get('/summary', verifyToken, isAdmin, async (req, res) => {
         0 as today_revenue,
         0 as week_revenue,
         0 as month_revenue,
-        COUNT(DISTINCT user_id) as total_customers
+        COUNT(DISTINCT booking_id) as total_customers
       FROM bookings
       WHERE status != 'cancelled'
     `, [today, today, today, today, today]);
@@ -47,7 +47,7 @@ router.get('/summary', verifyToken, isAdmin, async (req, res) => {
     const [popularServices] = await pool.query(`
       SELECT 
         s.service_name,
-        COUNT(b.user_id) as booking_count
+        COUNT(b.booking_id) as booking_count
 
       FROM bookings b
       JOIN services s ON b.service_id = s.service_id
@@ -65,16 +65,13 @@ router.get('/summary', verifyToken, isAdmin, async (req, res) => {
         b.status,
 
         b.created_at,
-        u.first_name, 
-        u.last_name,
-        u.email,
         p.pet_name,
         p.pet_type,
         p.gender AS sex,
 
         s.service_name
       FROM bookings b
-      LEFT JOIN users u ON b.user_id = u.user_id
+      
       LEFT JOIN pets p ON b.pet_id = p.pet_id
       LEFT JOIN services s ON b.service_id = s.service_id
       ORDER BY b.created_at DESC
@@ -130,7 +127,7 @@ router.get('/bookings/stats', verifyToken, isAdmin, validateQuery(schemas.dateRa
       SELECT 
         s.service_name,
         s.service_type,
-        COUNT(b.user_id) as booking_count
+        COUNT(b.booking_id) as booking_count
 
       FROM bookings b
       JOIN services s ON b.service_id = s.service_id
@@ -287,7 +284,7 @@ router.get('/customers', verifyToken, isAdmin, async (req, res) => {
         u.last_name,
         u.email,
         u.phone,
-        COUNT(b.user_id) as booking_count
+        COUNT(b.booking_id) as booking_count
 
         MAX(b.booking_date) as last_booking_date,
         STRING_AGG(DISTINCT p.pet_name, ', ' ORDER BY p.pet_name) as pet_names
@@ -310,7 +307,7 @@ router.get('/customers', verifyToken, isAdmin, async (req, res) => {
     // Get repeat customer percentage
     const [repeatStats] = await pool.query(`
       SELECT 
-        COUNT(DISTINCT user_id) as customer_count,
+        COUNT(DISTINCT booking_id) as customer_count,
         SUM(CASE WHEN booking_count > 1 THEN 1 ELSE 0 END) as repeat_customer_count
       FROM (
         SELECT 

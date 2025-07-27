@@ -38,10 +38,10 @@ async function getBookings(options = {}) {
     const offset = (page-1)*limit;
 
     const dataQuery = `
-      SELECT b.*, s.service_name, s.service_type, u.first_name, u.last_name, u.email, u.phone, u.address
+      SELECT b.*, s.service_name, s.service_type 
       FROM bookings b
       LEFT JOIN services s ON b.service_id = s.service_id
-      LEFT JOIN users u ON b.user_id = u.user_id
+      
       ${whereSql}
       ORDER BY ${sortBy} ${sortDir}
       LIMIT ? OFFSET ?`;
@@ -128,11 +128,10 @@ async function getBookings(options = {}) {
     const query = `
       SELECT 
         b.*,
-        u.first_name, u.last_name, u.email, u.phone, u.address,
         p.pet_name, p.pet_type, p.breed, p.gender, p.age, p.weight,
         s.service_name, s.service_type, s.price
       FROM bookings b
-      LEFT JOIN users u ON b.user_id = u.user_id
+      
       LEFT JOIN pets p ON b.pet_id = p.pet_id
       LEFT JOIN services s ON b.service_id = s.service_id
       ${whereStatement}
@@ -212,11 +211,10 @@ async function getBookingById(id) {
     const query = `
       SELECT 
         b.*,
-        u.first_name, u.last_name, u.email, u.phone, u.address,
         p.pet_name, p.pet_type, p.breed, p.gender, p.age, p.weight,
         s.service_name, s.service_type, s.price
       FROM bookings b
-      LEFT JOIN users u ON b.user_id = u.user_id
+      
       LEFT JOIN pets p ON b.pet_id = p.pet_id
       LEFT JOIN services s ON b.service_id = s.service_id
       WHERE b.booking_id = ?
