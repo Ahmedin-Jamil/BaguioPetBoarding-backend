@@ -16,9 +16,10 @@ async function createAdmin() {
   });
 
   try {
-    // Default admin credentials
-    const username = 'admin';
-    const password = 'admin123'; // You should change this immediately after first login
+    // Allow username and password via command-line args
+    const [, , usernameArg, passwordArg] = process.argv;
+    const username = usernameArg || 'baguiopethotel_admin';
+    const password = passwordArg || 'BPH@dm1n2025!';
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
