@@ -278,11 +278,11 @@ router.get('/', async (req, res) => {
         b.admin_notes,
         b.room_type,
         TO_CHAR(b.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at,
-        b.owner_first_name as customer_first_name,
-        b.owner_last_name as customer_last_name,
-        b.owner_email as customer_email,
-        b.owner_phone as customer_phone,
-        b.owner_address as customer_address,
+        COALESCE(u.first_name, b.owner_first_name) as owner_first_name,
+        COALESCE(u.last_name, b.owner_last_name) as owner_last_name,
+        COALESCE(u.email, b.owner_email) as owner_email,
+        COALESCE(u.phone, b.owner_phone) as owner_phone,
+        COALESCE(u.address, b.owner_address) as owner_address,
         b.pet_name,
         b.pet_type,
         b.weight_category,
@@ -293,10 +293,9 @@ router.get('/', async (req, res) => {
         s.service_type,
         sc.category_name
       FROM bookings b
-      
-      
       JOIN services s ON b.service_id = s.service_id
       JOIN service_categories sc ON s.category_id = sc.category_id
+      LEFT JOIN users u ON b.user_id = u.user_id
     `;
     
     const queryParams = [];

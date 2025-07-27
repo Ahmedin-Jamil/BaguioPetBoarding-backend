@@ -38,9 +38,10 @@ async function getBookings(options = {}) {
     const offset = (page-1)*limit;
 
     const dataQuery = `
-      SELECT b.*, s.service_name, s.service_type
+      SELECT b.*, s.service_name, s.service_type, u.first_name, u.last_name, u.email, u.phone, u.address
       FROM bookings b
       LEFT JOIN services s ON b.service_id = s.service_id
+      LEFT JOIN users u ON b.user_id = u.user_id
       ${whereSql}
       ORDER BY ${sortBy} ${sortDir}
       LIMIT ? OFFSET ?`;
