@@ -224,10 +224,11 @@ async function getUnavailableDates(serviceType, roomType, startDate, endDate) {
     const formattedStart = formatDateString(startDate);
     const formattedEnd = formatDateString(endDate);
     
-    // Query manually blocked dates from unavailable_dates table
+    // Query manually blocked dates from calendar_availability table
+    // PostgreSQL compatible query with proper type casting
     const { rows: blockedDates } = await pool.query(
-      `SELECT date, reason FROM calendar_availability 
-       WHERE date BETWEEN $1 AND $2 
+      `SELECT date::text as date, reason FROM calendar_availability 
+       WHERE date BETWEEN $1::date AND $2::date 
        AND is_available = FALSE`,
       [formattedStart, formattedEnd]
     );
