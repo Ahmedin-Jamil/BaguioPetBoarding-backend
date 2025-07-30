@@ -201,7 +201,7 @@ const data = {
           pet_name, pet_type, breed, gender, date_of_birth, weight_category,
           service_id, room_type, start_date, end_date, start_time, end_time,
           total_amount, special_requests, grooming_type, status
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21, 'pending')
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::date,$16::date,$17,$18,$19,$20,$21, 'pending')
         RETURNING booking_id`,
         [referenceNumber,
           data.owner_first_name, data.owner_last_name, data.owner_email, data.owner_phone, data.owner_address,
