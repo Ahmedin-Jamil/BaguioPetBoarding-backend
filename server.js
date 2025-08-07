@@ -13,7 +13,7 @@ if (process.env.NODE_ENV === 'production') {
     console[method] = () => {};
   });
 }
-const { createClient } = require('redis');
+// Redis client import removed
 
 // Import API Routes
 const servicesRoutes = require('./routes/services');
@@ -30,6 +30,21 @@ const authRoutes = require('./routes/auth');
 // Import database connection and test function
 const { pool, testQuery } = require('./db');
 
+// Test database connection
+(async () => {
+  try {
+    const connected = await testQuery();
+    if (connected) {
+      console.log('Database connection test successful');
+    } else {
+      console.log('Database connection test failed');
+    }
+  } catch (error) {
+    console.error('Error connecting to database:', error.message);
+    console.log('Continuing without database connection...');
+  }
+})();
+
 console.log('Using Supabase PostgreSQL database connection...');
 
 // Test database connection
@@ -44,28 +59,6 @@ testQuery().then(success => {
 // Import services
 const petApiService = require('./pet_api_service');
 const geminiService = require('./gemini_service');
-
-// Initialize Redis Client if not disabled
-let redisClient = null;
-if (!process.env.REDIS_DISABLED || process.env.REDIS_DISABLED !== 'true') {
-  redisClient = createClient({
-    // You might need to add connection details here if Redis is not running on localhost:6379
-    // url: 'redis://username:password@host:port'
-  });
-
-  redisClient.on('error', (err) => console.error('Redis Client Error', err));
-
-  (async () => {
-    try {
-      await redisClient.connect();
-      console.log('Connected to Redis successfully!');
-    } catch (err) {
-      console.error('Could not connect to Redis:', err);
-    }
-  })();
-} else {
-  console.log('Redis is disabled via REDIS_DISABLED environment variable');
-}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -855,35 +848,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
-
-// Redis cache middleware
-const cacheMiddleware = async (req, res, next) => {
-  if (!redisClient || req.method !== 'GET') return next();
-  
-  try {
-    const key = `cache:${req.originalUrl}`;
-    const cachedResponse = await redisClient.get(key);
-    
-    if (cachedResponse) {
-      return res.json(JSON.parse(cachedResponse));
-    }
-    
-    res.sendResponse = res.json;
-    res.json = async (body) => {
-      await redisClient.setex(key, 300, JSON.stringify(body)); // Cache for 5 minutes
-      res.sendResponse(body);
-    };
-    
-    next();
-  } catch (error) {
-    console.error('Cache middleware error:', error);
-    next();
-  }
-};
-
-// Apply caching to specific routes
-app.use('/api/services', cacheMiddleware);
-app.use('/api/pets', cacheMiddleware);
 
 // Start server with the PORT environment variable (critical for Render deployment)
 const startServer = () => {
